@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<title>Consistency-Guided Joint Training for Weakly Supervised Segmentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head><body>
+<div class="wrap">
+  <nav>
+    <a href="index.html#projects">&larr; projects</a>
+    <a href="index.html">/home</a>
+    <span class="nav-spacer"></span>
+    <div class="theme-toggle"><button type="button" id="theme-toggle-btn" aria-label="Toggle color theme"><span id="theme-icon" aria-hidden="true">&#9728;</span></button></div>
+  </nav>
+  <header class="head">
+    <h1>Consistency-Guided Joint Training Framework for Noise-Robust Weakly Supervised Segmentation and Detection</h1>
+    <p class="authors"><b>Changhe You</b>, Nan Gao, Jijun Tang, Peng Chen, Tianshuang Liu, Kangnan Mo</p>
+    <p class="pitch">Bounding boxes are cheap labels but noisy ones. We train detection and segmentation together so the noise does less damage.</p>
+  </header>
+  <article class="story">
+<section class="blk"><h2>Where box labels fail</h2><div class="cols"><div class="txt"><p>Pixel-level masks are expensive, so weakly supervised methods learn from boxes. A box is a coarse stand-in for a mask, and pseudo-masks built from it carry noise.</p><p>The damage is worst for lesions that are small, scattered and fill little of their box, as in endoscopic caries images.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/wss_shift.png" alt="Medical targets (top) fill far less of their box than common benchmark objects (middle, bottom)."></div><figcaption>Medical targets (top) fill far less of their box than common benchmark objects (middle, bottom).</figcaption></figure></div></div></section>
+<section class="blk"><h2>Method</h2><p>Two networks, one for detection and one for segmentation, look at the same image. Cross-task consistency regularisation (CTCR) aligns their low-level features, so detection's reliable localisation helps segmentation without dragging its semantics along. Iterative refinement (IRS) then chooses, for each image, the best pseudo-mask from a library of candidates, scoring them on box consistency, structural similarity [<a class="cite" href="#r1">1</a>] and the model's own predictions.</p><div class="wide"><figure class="fig"><div class="frame"><img src="img/wss_framework.png" alt="Two parallel networks, the CTCR module on low-level features, and IRS for pseudo-mask selection."></div><figcaption>Two parallel networks, the CTCR module on low-level features, and IRS for pseudo-mask selection.</figcaption></figure></div></section>
+<section class="blk"><h2>Results</h2><div class="cols"><div class="txt"><p>On the caries dataset the method reaches 43.26% mIoU, 29.6 points above the best box-supervised baseline, BoxSnake [<a class="cite" href="#r2">2</a>], and 18.7 above SAM [<a class="cite" href="#r3">3</a>].</p><p>On ISIC2017 skin lesions [<a class="cite" href="#r4">4</a>], where objects are regular and fill most of their box, it is only competitive. CTCR alone adds 5 mIoU points. Everything happens at training time, so inference is unchanged.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/wss_compare.png" alt="Caries images (left three columns) and skin lesions (right three) against box-supervised baselines."></div><figcaption>Caries images (left three columns) and skin lesions (right three) against box-supervised baselines.</figcaption></figure></div></div></section>
+<section class="blk refsec"><h2>References</h2><ol class="refs"><li id="r1">Z. Wang, A. C. Bovik, H. R. Sheikh, E. P. Simoncelli. Image quality assessment: From error visibility to structural similarity. <i>IEEE TIP</i> 13(4):600&ndash;612, 2004.</li><li id="r2">R. Yang, L. Song, Y. Ge, X. Li. BoxSnake: Polygonal instance segmentation with box supervision. <i>ICCV</i>, 2023, pp. 766&ndash;776.</li><li id="r3">A. Kirillov et al. Segment anything. <i>ICCV</i>, 2023, pp. 4015&ndash;4026.</li><li id="r4">D. Gutman, N. C. F. Codella, E. Celebi et al. Skin lesion analysis toward melanoma detection. arXiv:1605.01397, 2016.</li></ol></section>
+  </article>
+  <p class="foot"><a href="index.html#projects">&larr; back to all projects</a></p>
+</div>
+<script src="site.js"></script>
+</body></html>

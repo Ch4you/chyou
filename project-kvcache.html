@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<title>Hierarchical KV-Cache Scheduling for LLM Inference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head><body>
+<div class="wrap">
+  <nav>
+    <a href="index.html#projects">&larr; projects</a>
+    <a href="index.html">/home</a>
+    <span class="nav-spacer"></span>
+    <div class="theme-toggle"><button type="button" id="theme-toggle-btn" aria-label="Toggle color theme"><span id="theme-icon" aria-hidden="true">&#9728;</span></button></div>
+  </nav>
+  <header class="head">
+    <h1>Hierarchical KV-Cache Scheduling for High-Throughput LLM Inference</h1>
+    
+    <p class="pitch">A two-tier KV cache for vLLM, and two ways to keep it warm: schedule requests by document, and find the document from the cache itself.</p>
+  </header>
+  <article class="story">
+<section class="blk"><h2>Order decides the hit rate</h2><div class="cols"><div class="txt"><p>vLLM [<a class="cite" href="#r1">1</a>] serves Qwen2.5-1.5B [<a class="cite" href="#r2">2</a>] with LMCache [<a class="cite" href="#r3">3</a>]: KV chunks live in a local tier and spill to a remote LMCache server. Our workload is 70 requests over 14 papers. A cache only helps when requests for the same document arrive close together: going from 3 to 14 distinct documents raises mean time to first token (TTFT) from 38 to 70 ms.</p><p>So the scheduler groups requests that share a document: the first one fills the cache and the rest hit it. Mean TTFT drops from 134 ms to 100 ms, 25% lower than FIFO.</p><p>How much it helps depends on the local cache. With a tiny cache everything is evicted anyway, with a large one nothing is, so the scheduler matters most in between: 1.28x at 0.1 GB against 1.06x at both ends.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/ik_main.png" alt="Mean TTFT in a batch of 14, 0.1 GB cache, 20 ms simulated remote delay per chunk."></div><figcaption>Mean TTFT in a batch of 14, 0.1 GB cache, 20 ms simulated remote delay per chunk.</figcaption></figure><figure class="fig"><div class="frame"><img src="img/cache_size_speedup.png" alt="Scheduler speedup by size of the local cache (cold-start runs, batch of 14)."></div><figcaption>Scheduler speedup by size of the local cache (cold-start runs, batch of 14).</figcaption></figure></div></div></section>
+<section class="blk"><h2>Finding the document without an id</h2><div class="cols"><div class="txt"><p>Real requests carry free text, not an id. A RAG step [<a class="cite" href="#r4">4</a>] embeds the query and picks the closest document, and it is right for 67 of 70 requests (95.7%).</p><p>But the lookup is not free: it takes about 140 ms per query, roughly as much as the model's own time to first token.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/rag_overhead.png" alt="Per-query latency of the RAG lookup and of the LLM, by size of the document database."></div><figcaption>Per-query latency of the RAG lookup and of the LLM, by size of the document database.</figcaption></figure></div></div><p>The KV tensors of a request already say which document it refers to. Averaging them per layer, reducing with PCA and clustering with KMeans recovers the document of every request, even from a title and question of about 52 tokens with no document text.</p><p>That is 100% against RAG's 95.7%, with no retrieval call. The catch is timing: RAG answers before inference, clustering only after the first request for a document has run. Its natural uses are prefetching the matching chunks, evicting by cluster instead of by recency, and routing a request to the node that already holds its cluster.</p></section>
+<section class="blk refsec"><h2>References</h2><ol class="refs"><li id="r1">W. Kwon et al. Efficient memory management for large language model serving with PagedAttention. <i>SOSP</i>, 2023.</li><li id="r2">Qwen Team. Qwen2.5 technical report. arXiv:2412.15115, 2024.</li><li id="r3">LMCache. <a href="https://github.com/LMCache/LMCache" target="_blank" rel="noopener noreferrer">github.com/LMCache/LMCache</a></li><li id="r4">P. Lewis et al. Retrieval-augmented generation for knowledge-intensive NLP tasks. <i>NeurIPS</i>, 2020.</li></ol></section>
+  </article>
+  <p class="foot"><a href="index.html#projects">&larr; back to all projects</a></p>
+</div>
+<script src="site.js"></script>
+</body></html>

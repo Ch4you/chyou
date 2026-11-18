@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<title>STRATA: Two Levels of Triage for Coding-Agent Fleets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head><body>
+<div class="wrap">
+  <nav>
+    <a href="index.html#projects">&larr; projects</a>
+    <a href="index.html">/home</a>
+    <span class="nav-spacer"></span>
+    <div class="theme-toggle"><button type="button" id="theme-toggle-btn" aria-label="Toggle color theme"><span id="theme-icon" aria-hidden="true">&#9728;</span></button></div>
+  </nav>
+  <header class="head">
+    <h1>STRATA: Two Levels of Triage for Coding-Agent Fleets</h1>
+    
+    <p class="pitch">With a budget for only part of an issue backlog, decide which issues a coding agent should attempt, before any agent runs.</p>
+  </header>
+  <article class="story">
+<section class="blk"><h2>Two decisions, not one</h2><div class="cols"><div class="txt"><p>An agent attempt costs about a dollar [<a class="cite" href="#r1">1</a>], and 40% of the tasks in our data are solved by no recorded run. Earlier work aborts a failing run after it has started [<a class="cite" href="#r2">2</a>&ndash;<a class="cite" href="#r4">4</a>]. STRATA decides before dispatch.</p><p>Which repository gets budget and which issue inside it goes first are different questions. A repository's past success rate answers the first and says nothing about the second, because every issue in it gets the same number. Pooled metrics hide this, so a score that only recognises hard repositories looks good while ordering nothing.</p><p>Tier 0 is free: the repository's earlier success rate, constant inside it. Tier 1 scores the issue text on a 15-dimension rubric [<a class="cite" href="#r1">1</a>] with a cheap model, at $0.00008 per issue. The combiner lets history move a repository's whole block of issues up or down a queue, but never reorder the issues inside it.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/strata_pipeline.png" alt="Tier 0 reads a repository&#x27;s history, Tier 1 reads the issue, and a combiner and policy build the queue."></div><figcaption>Tier 0 reads a repository's history, Tier 1 reads the issue, and a combiner and policy build the queue.</figcaption></figure></div></div></section>
+<section class="blk"><h2>What it buys</h2><p>On 22,625 real tasks from SWE-bench [<a class="cite" href="#r5">5</a>] and related datasets [<a class="cite" href="#r6">6</a>, <a class="cite" href="#r7">7</a>], STRATA completes 82%, 68%, 51% and 32% more tasks than a random order when the budget covers 5, 10, 25 and 50% of the backlog. To reach a given number of solved tasks it saves 32 to 45% of the agent budget, and the triage itself costs 0.11% of total spend.</p><p>Each level pays on its own. Ordering inside repositories alone and choosing between repositories alone both add completions at every budget, which is why the two decisions are kept separate.</p><div class="pair"><figure class="fig"><div class="frame"><img src="img/strata_fig_budget_curve.png" alt="Expected tasks solved against budget; the red curve is STRATA."></div><figcaption>Expected tasks solved against budget; the red curve is STRATA.</figcaption></figure><figure class="fig"><div class="frame"><img src="img/strata_fig_decomposition.png" alt="Completions gained over FIFO by each level alone and by both."></div><figcaption>Completions gained over FIFO by each level alone and by both.</figcaption></figure></div></section>
+<section class="blk"><h2>As a system</h2><p>Events go to Kafka keyed by repository, so Tier 0 is a local aggregate with no distributed join, and stateless Tier 1 workers scale out. PostgreSQL holds the state and Spark rebuilds the history. A read-only GitHub App feeds the issues, and agents take work from the queue through leases.</p></section>
+<section class="blk refsec"><h2>References</h2><ol class="refs"><li id="r1">C. Ge, D. Kryvosheieva, D. Fried, U. Girit, K. Hariharan. Agent psychometrics: Task-level performance prediction in agentic coding benchmarks. <i>COLM</i>, 2026. arXiv:2604.00594.</li><li id="r2">C. Wang et al. Fail-fast, restart-smart: Early failure prediction and restart for SWE agentic tasks. arXiv:2608.03222, 2026.</li><li id="r3">K. Ruan et al. Doomed from the start: Early abort of LLM agent episodes via a recall-controlled probe cascade. arXiv:2607.06503, 2026.</li><li id="r4">Y. Shi et al. EarlyEval: Cheaper agent evaluation via early outcome prediction. arXiv:2609.02783, 2026.</li><li id="r5">C. E. Jimenez et al. SWE-bench: Can language models resolve real-world GitHub issues? <i>ICLR</i>, 2024.</li><li id="r6">OpenAI. Introducing SWE-bench Verified. 2024.</li><li id="r7">J. Pan et al. Training software engineering agents and verifiers with SWE-Gym. arXiv:2412.21139, 2024.</li></ol></section>
+  </article>
+  <p class="foot"><a href="index.html#projects">&larr; back to all projects</a></p>
+</div>
+<script src="site.js"></script>
+</body></html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<title>Battle-Testing OmniPaxos-KV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head><body>
+<div class="wrap">
+  <nav>
+    <a href="index.html#projects">&larr; projects</a>
+    <a href="index.html">/home</a>
+    <span class="nav-spacer"></span>
+    <div class="theme-toggle"><button type="button" id="theme-toggle-btn" aria-label="Toggle color theme"><span id="theme-icon" aria-hidden="true">&#9728;</span></button></div>
+  </nav>
+  <header class="head">
+    <h1>Battle-Testing OmniPaxos-KV: Linearizability under Jepsen-Style Fault Injection</h1>
+    
+    <p class="pitch">Black-box testing of a Paxos-based key-value store: does it stay linearizable when messages are lost, networks split and nodes are killed?</p>
+  </header>
+  <article class="story">
+<section class="blk"><h2>Setup</h2><div class="cols"><div class="txt"><p>OmniPaxos-KV is a key-value store that promises linearizability [<a class="cite" href="#r1">1</a>] on top of the OmniPaxos replicated state machine [<a class="cite" href="#r2">2</a>]. We attack it as a black box with Maelstrom [<a class="cite" href="#r3">3</a>]: a simulated network sits between the clients and the server processes, and a checker verifies the recorded history.</p><p>The store spoke TCP with numeric node ids, Maelstrom speaks JSON over stdin/stdout with names like n1. A shim replaces the TCP layer, routes client operations to the store and consensus messages to OmniPaxos, and maps the ids.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/paxos_arch.png" alt="Maelstrom drives the server processes over stdin and stdout; the checker judges the history."></div><figcaption>Maelstrom drives the server processes over stdin and stdout; the checker judges the history.</figcaption></figure></div></div></section>
+<section class="blk"><h2>Retries break compare-and-swap</h2><p>The first real finding was not a consensus bug. When a reply is lost the client resends, and a server that executes the resend again corrupts state: a retried write overwrites a newer value, a retried CAS succeeds a second time after someone reverted it, and a CAS that had already succeeded is reported as failed.</p><div class="wide"><figure class="fig"><div class="frame"><img src="img/paxos_anomalies.png" alt="Three anomalies caused by blindly re-executing a retried request."></div><figcaption>Three anomalies caused by blindly re-executing a retried request.</figcaption></figure></div><p>The fix is exactly-once execution. The replicated state machine keeps a reply cache keyed by (client id, message id) and returns the cached reply for a retry. After a crash the cache is rebuilt by replaying the persistent log before any new request is accepted.</p></section>
+<section class="blk"><h2>Crashes and partitions</h2><div class="cols"><div class="txt"><p>Each node keeps its own write-ahead log, writes its configuration atomically through a temporary file and a rename, and recovers its identity from the first message it receives after a restart. A node killed with SIGKILL comes back without losing data.</p><p>We then split the network with the leader in the majority or the minority, as a star and as a ring, and crashed a follower or the leader, with the leader coming back before or after a new one was elected. Knossos [<a class="cite" href="#r4">4</a>] checked every history: linearizability held in all of them.</p><p>What the runs did expose is availability. With the leader in the minority, requests stall for about five seconds until the majority elects a new leader, and a cold cluster needs up to two election rounds before it serves its first requests. Tuning the election tick is the obvious next step.</p></div><div class="vis"><figure class="fig"><div class="frame"><img src="img/paxos_partition.png" alt="Leader in a minority partition: the old leader n4 is cut off and the majority elects n3."></div><figcaption>Leader in a minority partition: the old leader n4 is cut off and the majority elects n3.</figcaption></figure></div></div></section>
+<section class="blk refsec"><h2>References</h2><ol class="refs"><li id="r1">M. P. Herlihy, J. M. Wing. Linearizability: A correctness condition for concurrent objects. <i>ACM TOPLAS</i> 12(3):463&ndash;492, 1990.</li><li id="r2">H. Ng, S. Haridi, P. Carbone. Omni-Paxos: Breaking the barriers of partial connectivity. <i>EuroSys</i>, 2023, pp. 314&ndash;330.</li><li id="r3">K. Kingsbury. Maelstrom: A workbench for writing distributed systems. 2023. <a href="https://github.com/jepsen-io/maelstrom" target="_blank" rel="noopener noreferrer">github.com/jepsen-io/maelstrom</a></li><li id="r4">Knossos, the Jepsen linearizability checker. <a href="https://github.com/jepsen-io/knossos" target="_blank" rel="noopener noreferrer">github.com/jepsen-io/knossos</a></li></ol></section>
+  </article>
+  <p class="foot"><a href="index.html#projects">&larr; back to all projects</a></p>
+</div>
+<script src="site.js"></script>
+</body></html>
